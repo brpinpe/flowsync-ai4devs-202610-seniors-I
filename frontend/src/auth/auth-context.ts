@@ -12,6 +12,8 @@ export type AuthContextValue = {
   login: (payload: LoginPayload) => Promise<void>
   signup: (payload: SignupPayload) => Promise<void>
   logout: () => Promise<void>
+  /** Olvida una sesión que el servidor ha rechazado y deja el motivo para el login. */
+  expireSession: (message: string) => void
 }
 
 /**
