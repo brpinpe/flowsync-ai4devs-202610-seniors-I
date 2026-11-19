@@ -26,6 +26,20 @@ export type SignupPayload = {
   passwordConfirmation: string
 }
 
+/** Conjunto cerrado de estados tal y como viajan por la API. */
+export type TaskStatus = 'pending' | 'in_progress' | 'done'
+
+/**
+ * Espejo de `TaskTransformer` del backend. Del responsable solo llegan `id` y
+ * `fullName`: nunca su email.
+ */
+export type Task = {
+  id: number
+  title: string
+  status: TaskStatus
+  assignee: { id: number; fullName: string | null }
+}
+
 export type LoginPayload = {
   email: string
   password: string
