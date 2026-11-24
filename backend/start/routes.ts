@@ -39,11 +39,11 @@ router
 
     router
       .group(() => {
-        router.get('perfil', [controllers.Profile, 'show'])
+        router.get('profile', [controllers.Profile, 'show'])
         router.post('logout', [controllers.AccessTokens, 'destroy'])
       })
       .prefix('account')
-      .as('perfil')
+      .as('profile')
       .use(middleware.auth())
 
     router
