@@ -1,0 +1,55 @@
+# Revisor automático de cada PR con Claude Code. Pasos pendientes, credencial
+# y coste: docs/ci-revisor.md.
+name: Claude review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+# Un push nuevo al mismo PR cancela la revisión en curso: no se paga por
+# revisar un diff que ya no existe.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read # leer el repo
+      pull-requests: write # publicar los hallazgos como comentarios del PR
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          # Camino 1 (suscripción): token de `claude setup-token`.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Camino 2 (API de la consola): comenta la línea de arriba y usa esta.
+          # anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR: ${{ github.event.pull_request.number }}
+
+            Revisa los cambios de este PR. Si existe REVIEW.md en la raíz del
+            repositorio, es el archivo de calibración: léelo primero y aplica
+            lo que dice sobre qué es grave y cuántas sugerencias menores caben.
+
+            - Obtén el diff con `gh pr diff` y los datos con `gh pr view`.
+            - Lee la salida de los comandos directamente: no la redirijas a
+              ficheros (`>`, `tee`...), esos intentos se deniegan y gastan turno.
+            - Para abrir ficheros del repo usa Read, Grep y Glob.
+            - Publica cada hallazgo concreto como comentario en línea con
+              mcp__github_inline_comment__create_inline_comment, y un único
+              resumen final con `gh pr comment`. No dejes hallazgos solo en el
+              registro de ejecución.
+            - Escribe en castellano.
+          claude_args: >-
+            --model sonnet
+            --effort medium
+            --max-turns 40
+            --allowedTools "Read,Grep,Glob,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
